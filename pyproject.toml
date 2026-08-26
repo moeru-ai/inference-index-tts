@@ -15,7 +15,7 @@ platforms = ["osx-arm64", "linux-64"]
 
 [tool.pixi.pypi-dependencies]
 inference_vllm_index_tts = { path = ".", editable = true }
-indextts = { path = "/Users/neko/Git/github.com/moeru-ai/inference-vllm-index-tts/index-tts", editable = true }
+indextts = { path = "./index-tts", editable = true }
 
 [tool.pixi.tasks]
 

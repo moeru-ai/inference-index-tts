@@ -55,7 +55,7 @@ From the workspace root, add a local PyPI project in editable mode with a PEP 50
 
 ```bash
 pixi add --pypi --editable \
-  "DISTRIBUTION_NAME @ file://$PWD/RELATIVE_PROJECT_PATH"
+  "DISTRIBUTION_NAME @ ./RELATIVE_PROJECT_PATH"
 ```
 
 - Read `DISTRIBUTION_NAME` from the local project's `[project].name`; do not assume it matches the Python import name.

@@ -47,7 +47,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026c-h151e31d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/wheel-0.48.0-pyhd8ed1ab_0.conda
       - pypi: ./
-      - pypi: /Users/neko/Git/github.com/moeru-ai/inference-vllm-index-tts/index-tts
+      - pypi: ./index-tts
       - pypi: https://download-r2.pytorch.org/whl/cu128/torch-2.8.0%2Bcu128-cp311-cp311-manylinux_2_28_x86_64.whl
       - pypi: https://download-r2.pytorch.org/whl/cu128/torchaudio-2.8.0%2Bcu128-cp311-cp311-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/01/a4/9b63d595d748e3aff8812b65eacc1a2c4bd90b7c2012e08e72373b4835eb/filelock-3.32.4-py3-none-any.whl
@@ -217,7 +217,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/readline-8.3-h8b90a29_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.13-hbeba79b_4.conda
       - pypi: ./
-      - pypi: /Users/neko/Git/github.com/moeru-ai/inference-vllm-index-tts/index-tts
+      - pypi: ./index-tts
       - pypi: https://files.pythonhosted.org/packages/00/3c/6e27e1dec2baa389171e3680baab9414f0d8005374ce700192fdafd023e6/kaldifst-1.8.0-cp311-cp311-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/01/a4/9b63d595d748e3aff8812b65eacc1a2c4bd90b7c2012e08e72373b4835eb/filelock-3.32.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/05/7f/798705f5296a58ca505d600456748d1be48078eac8a7050d8a98bc9edb89/decorator-5.3.1-py3-none-any.whl
@@ -924,9 +924,9 @@ packages:
 - pypi: ./
   name: inference-vllm-index-tts
   requires_dist:
-  - fastapi
+  - fastapi>=0.141.1,<0.142
   requires_python: '>=3.11'
-- pypi: /Users/neko/Git/github.com/moeru-ai/inference-vllm-index-tts/index-tts
+- pypi: ./index-tts
   name: indextts
   requires_dist:
   - accelerate==1.8.1
