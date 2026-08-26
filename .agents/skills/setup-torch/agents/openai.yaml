@@ -1,0 +1,7 @@
+interface:
+  display_name: "Set Up Torch"
+  short_description: "Detect the host and configure a verified Torch device"
+  default_prompt: "Use $setup-torch to detect this host and configure a compatible PyTorch device through Pixi."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,24 @@
+[project]
+authors = [{name = "Neko Ayaka", email = "neko@ayaka.moe"}]
+name = "inference-vllm-index-tts"
+requires-python = ">= 3.11"
+version = "0.1.0"
+dependencies = ["fastapi>=0.141.1,<0.142"]
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "linux-64"]
+
+[tool.pixi.pypi-dependencies]
+inference_vllm_index_tts = { path = ".", editable = true }
+indextts = { path = "/Users/neko/Git/github.com/moeru-ai/inference-vllm-index-tts/index-tts", editable = true }
+
+[tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+python = "3.11.*"
+pip = ">=26.2.1,<27"

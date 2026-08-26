@@ -1,0 +1,7 @@
+interface:
+  display_name: "Install Torch"
+  short_description: "Install a compatible PyTorch trio in a Pixi workspace"
+  default_prompt: "Use $install-torch to verify and install an explicit PyTorch target in this Pixi workspace."
+
+policy:
+  allow_implicit_invocation: true
