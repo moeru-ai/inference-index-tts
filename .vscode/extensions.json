@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-python-envs",
+    "ms-python.debugpy",
+    "charliermarsh.ruff",
+    "astral-sh.ty",
+    "jjjermiah.pixi-vscode",
+    "tamasfe.even-better-toml",
+    "redhat.vscode-yaml",
+    "streetsidesoftware.code-spell-checker"
+  ]
+}
