@@ -4,12 +4,13 @@ import base64
 import binascii
 import hashlib
 import hmac
+import re
 import shutil
 import subprocess
 import tempfile
 import threading
 from collections import OrderedDict
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncIterator, Mapping, Sequence
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -21,11 +22,32 @@ from fastapi.responses import JSONResponse, Response
 from fastapi.routing import APIRoute
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.concurrency import run_in_threadpool
+from starlette.middleware.cors import CORSMiddleware
+from starlette.types import ASGIApp
 
 AudioFormat = Literal["mp3", "opus", "aac", "flac", "wav", "pcm"]
 ReferenceAudioFormat = Literal["wav", "mp3", "flac", "ogg", "opus", "aac", "m4a"]
 ModelVersion = Literal["2", "2.5"]
 Language = Literal["auto", "zh", "en", "ja", "es", "ar", "ko", "ru"]
+
+CORS_ORIGINS_ENV = "INFERENCE_INDEX_TTS_ORIGINS"
+DEFAULT_CORS_ORIGINS = (
+    *(
+        pattern
+        for host in ("localhost", "127.0.0.1", "0.0.0.0", "[::1]")
+        for pattern in (
+            f"http://{host}",
+            f"https://{host}",
+            f"http://{host}:*",
+            f"https://{host}:*",
+        )
+    ),
+    "app://*",
+    "file://*",
+    "tauri://*",
+    "vscode-webview://*",
+    "vscode-file://*",
+)
 
 CONTENT_TYPES: dict[AudioFormat, str] = {
     "mp3": "audio/mpeg",
@@ -60,6 +82,45 @@ EMOTION_NAMES = (
     "surprised",
     "calm",
 )
+
+
+def parse_cors_origins(value: str | None) -> tuple[str, ...]:
+    """Return Ollama-style comma-separated origin patterns plus safe local defaults."""
+    if value is None:
+        return DEFAULT_CORS_ORIGINS
+    unquoted = value.strip().strip("\"'")
+    configured = tuple(pattern.strip() for pattern in unquoted.split(",") if pattern.strip())
+    return configured + DEFAULT_CORS_ORIGINS
+
+
+def origin_matches(origin: str, patterns: Sequence[str]) -> bool:
+    return any(
+        re.fullmatch(re.escape(pattern).replace(r"\*", ".*"), origin, flags=re.IGNORECASE) for pattern in patterns
+    )
+
+
+class OriginPatternCORSMiddleware(CORSMiddleware):
+    """Starlette CORS middleware with Ollama-style wildcard origin matching."""
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        *,
+        allow_origin_patterns: Sequence[str],
+        allow_methods: Sequence[str] = ("GET",),
+        allow_headers: Sequence[str] = (),
+        allow_private_network: bool = False,
+    ) -> None:
+        self.allow_origin_patterns = tuple(allow_origin_patterns)
+        super().__init__(
+            app,
+            allow_methods=allow_methods,
+            allow_headers=allow_headers,
+            allow_private_network=allow_private_network,
+        )
+
+    def is_allowed_origin(self, origin: str) -> bool:
+        return origin_matches(origin, self.allow_origin_patterns)
 
 
 class StrictModel(BaseModel):
@@ -157,6 +218,7 @@ class ServerConfig:
     max_reference_audio_bytes: int = 20 * 1024 * 1024
     reference_cache_size: int = 32
     api_key: str | None = field(default=None, repr=False)
+    cors_origins: tuple[str, ...] = DEFAULT_CORS_ORIGINS
 
     def __post_init__(self) -> None:
         if not self.models:
@@ -540,6 +602,13 @@ def create_app(
             references.close()
 
     app = FastAPI(title="IndexTTS OpenAI-compatible server", lifespan=lifespan)
+    app.add_middleware(
+        OriginPatternCORSMiddleware,
+        allow_origin_patterns=config.cors_origins,
+        allow_methods=("GET", "POST", "OPTIONS"),
+        allow_headers=("*",),
+        allow_private_network=True,
+    )
 
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(_: Request, exc: RequestValidationError) -> JSONResponse:

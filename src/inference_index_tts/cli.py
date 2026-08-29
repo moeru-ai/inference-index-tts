@@ -1,16 +1,19 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 import uvicorn
 
 from inference_index_tts.server import (
+    CORS_ORIGINS_ENV,
     ModelConfig,
     ModelVersion,
     ServerConfig,
     create_app,
+    parse_cors_origins,
     resolve_model_dir,
 )
 
@@ -174,6 +177,7 @@ def main(argv: list[str] | None = None) -> None:
         max_reference_audio_bytes=args.max_reference_audio_bytes,
         reference_cache_size=args.reference_cache_size,
         api_key=args.api_key,
+        cors_origins=parse_cors_origins(os.environ.get(CORS_ORIGINS_ENV)),
     )
     uvicorn.run(create_app(config), host=args.host, port=args.port, log_level=args.log_level)
 

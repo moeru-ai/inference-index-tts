@@ -21,6 +21,8 @@ from inference_index_tts.server import (
     create_app,
     detect_language,
     encode_audio,
+    origin_matches,
+    parse_cors_origins,
     resolve_model_dir,
 )
 
@@ -55,12 +57,15 @@ async def request(
     path: str = "/v1/audio/speech",
     method: str = "POST",
     authorization: str | None = None,
+    extra_headers: list[tuple[bytes, bytes]] | None = None,
 ):
     payload = json.dumps(body).encode() if body is not None else b""
     sent = []
     headers = [(b"content-type", b"application/json")]
     if authorization is not None:
         headers.append((b"authorization", authorization.encode()))
+    if extra_headers is not None:
+        headers.extend(extra_headers)
     received = False
 
     async def receive():
@@ -117,6 +122,49 @@ class ServerTests(unittest.TestCase):
         body = {"model": "index-tts-2.5", "input": "你好，世界", "voice": "alice"}
         body.update(updates)
         return body
+
+    def test_localhost_cors_preflight_is_allowed_on_any_port(self):
+        start, _ = asyncio.run(
+            request(
+                self.app,
+                path="/v1/audio/speech",
+                method="OPTIONS",
+                extra_headers=[
+                    (b"origin", b"http://localhost:5173"),
+                    (b"access-control-request-method", b"POST"),
+                    (b"access-control-request-headers", b"authorization,content-type"),
+                    (b"access-control-request-private-network", b"true"),
+                ],
+            )
+        )
+        headers = dict(start["headers"])
+        self.assertEqual(start["status"], 200)
+        self.assertEqual(headers[b"access-control-allow-origin"], b"http://localhost:5173")
+        self.assertIn(b"authorization", headers[b"access-control-allow-headers"].lower())
+        self.assertEqual(headers[b"access-control-allow-private-network"], b"true")
+
+    def test_cors_origin_patterns_include_configured_and_loopback_origins(self):
+        patterns = parse_cors_origins(" https://*.example.com,chrome-extension://abc123 ")
+        self.assertTrue(origin_matches("https://studio.example.com", patterns))
+        self.assertTrue(origin_matches("chrome-extension://abc123", patterns))
+        self.assertTrue(origin_matches("https://127.0.0.1:8443", patterns))
+        self.assertTrue(origin_matches("http://[::1]:3000", patterns))
+        self.assertFalse(origin_matches("https://example.net", patterns))
+
+    def test_unconfigured_remote_cors_origin_is_rejected(self):
+        start, _ = asyncio.run(
+            request(
+                self.app,
+                path="/v1/audio/speech",
+                method="OPTIONS",
+                extra_headers=[
+                    (b"origin", b"https://example.net"),
+                    (b"access-control-request-method", b"POST"),
+                ],
+            )
+        )
+        self.assertEqual(start["status"], 400)
+        self.assertNotIn(b"access-control-allow-origin", dict(start["headers"]))
 
     def test_request_model_routes_to_registered_engine(self):
         start, body = asyncio.run(request(self.app, self.speech_body(response_format="wav")))

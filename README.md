@@ -32,6 +32,17 @@ Common server options:
 - `--reference-cache-size`: set the number of inline reference audio files cached by content. The default is 32.
 - `--default-language`: set the language used when a request specifies `extra.language=auto`.
 
+### Browser origins (CORS)
+
+Following Ollama's origin configuration model, HTTP and HTTPS origins on `localhost`, `127.0.0.1`, `0.0.0.0`, and `[::1]` are allowed by default on any port. Additional origins can be supplied as a comma-separated list in `INFERENCE_INDEX_TTS_ORIGINS`; `*` wildcards are supported:
+
+```bash
+INFERENCE_INDEX_TTS_ORIGINS='https://studio.example.com,chrome-extension://*' \
+  pixi run serve --model 'index-tts-2.5@file:///models/index-tts-2.5/checkpoints'
+```
+
+Configured origins are added to the local defaults. CORS preflight requests accept the server's `GET` and `POST` methods and requested headers, including `Authorization`.
+
 ## Basic request
 
 ```bash
